@@ -31,7 +31,7 @@ class Paginator extends BasePaginator
     {
         $this->resetQuery();
 
-        if ($this->items->count() == $this->perPage || $this->hasMorePages()) {
+        if ($this->items->count() == $this->perPage) {
             $this->appends('start', session()->get('accountant.api.start'));
 
             return $this->url($this->currentPage() + 1);
@@ -63,6 +63,6 @@ class Paginator extends BasePaginator
      */
     public function hasMorePages()
     {
-        return $this->morePages || $this->items->count() > $this->perPage;
+        return $this->morePages || $this->hasPages();
     }
 }

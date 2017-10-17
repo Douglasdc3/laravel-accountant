@@ -9,9 +9,9 @@ use Illuminate\Support\Collection;
 abstract class Client
 {
     /**
-     * Current data object.
+     * Current data collection.
      *
-     * @var object
+     * @var Collection
      */
     protected $data;
 
@@ -104,13 +104,17 @@ abstract class Client
      */
     public function paginate($path, $query): Paginator
     {
-        if (! is_array($this->data) && ($this->data->object !== 'list' || ! is_array($this->data->data))) {
+        if (!is_array($this->data) && $this->data->object !== 'list') {
             throw new LogicException("Object must be a 'list' in order to paginate.");
         }
 
         $collection = new Collection(is_array($this->data) ? $this->data : $this->data->data);
 
         $this->points($collection->first()->id, $collection->last()->id);
+
+        if ($collection->count() > config('accountant.pagination.limit')) {
+            $collection->where('id', $this->start())->dump();
+        }
 
         return new Paginator(
             $collection,

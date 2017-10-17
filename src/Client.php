@@ -80,11 +80,17 @@ abstract class Client
      */
     public function list(array $params = [])
     {
-        $this->data = $this->getStripeClass()::all(array_merge($params, [
-            'limit' => $this->limit(),
-            'ending_before' => $this->end(),
-            'starting_after' => $this->start(),
-        ]));
+        $type = strtolower($this->getClientName());
+
+        if (cache()->has('accountant.'.$type)) {
+            $this->data = cache('accountant.'.$type);
+        } else {
+            $this->data = $this->getStripeClass()::all(array_merge($params, [
+                'limit' => $this->limit(),
+                'ending_before' => $this->end(),
+                'starting_after' => $this->start(),
+            ]));
+        }
 
         return $this;
     }
@@ -98,11 +104,11 @@ abstract class Client
      */
     public function paginate($path, $query): Paginator
     {
-        if ($this->data->object !== 'list' || ! is_array($this->data->data)) {
+        if (! is_array($this->data) && ($this->data->object !== 'list' || ! is_array($this->data->data))) {
             throw new LogicException("Object must be a 'list' in order to paginate.");
         }
 
-        $collection = new Collection($this->data->data);
+        $collection = new Collection(is_array($this->data) ? $this->data : $this->data->data);
 
         $this->points($collection->first()->id, $collection->last()->id);
 
